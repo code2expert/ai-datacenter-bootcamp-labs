@@ -1,5 +1,5 @@
 {
-  "_note": "SAMPLE baseline from the reference T4 run 2026-08-07. Schema matches what D2 Cell 5 writes; your team uploads its OWN baselines.json from day 2. Use this only if yours is lost, and say so in your A/B report.",
+  "_note": "SAMPLE baseline from the reference T4 run 2026-08-31. Schema matches what D2 Cell 5 writes; your team uploads its OWN baselines.json from day 2. Use this only if yours is lost, and say so in your A/B report.",
   "model": "Qwen/Qwen2.5-1.5B-Instruct",
   "dtype": "fp16",
   "ttft_s": {
