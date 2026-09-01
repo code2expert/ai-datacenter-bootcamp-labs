@@ -1,0 +1,24 @@
+# DELIBERATELY UNPINNED. Writing the pins in is step 1 of the lab.
+#
+# Open ../../../../PINS.md, find the "serving service (weeks 2, tier 0 CPU path)"
+# table, and put the version next to every package below BEFORE you install.
+#
+# Do not skip this and install as-is. An unpinned install resolves to whatever
+# shipped this morning, and on 2026-07-27 that meant transformers 5.14.1 against
+# a lab written for 4.46. The container came up healthy, answered /health and
+# /v1/models, then returned 500 on the first real completion, because
+# transformers 5 changed what apply_chat_template returns. A server that passes
+# its health check and fails its job is the worst kind to debug, which is why
+# this file makes you do the pinning by hand once.
+#
+# ON COLAB: delete the torch line rather than pinning it. Colab ships torch
+# preinstalled and installing a second one breaks the runtime. Pin it locally.
+
+fastapi
+uvicorn[standard]
+pydantic
+transformers
+torch
+accelerate
+openai
+httpx
