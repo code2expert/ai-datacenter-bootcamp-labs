@@ -1,4 +1,33 @@
 # Lab W3D3: the engine swap
+#Updated on September 01, 2026.
+#Google updated the version of python on colab to 3.13 which would affect the code belo from running smoothly. To correct this, you should deploy
+#Python 3.10 in a virtual environment before running the lab. Thie ensures that your environment has all you need to run the lab smoothly.
+
+import subprocess
+import os
+
+# 1. Install python3.10 and venv support on Colab
+subprocess.run(["sudo", "apt-get", "update", "-y"], check=True)
+subprocess.run(["sudo", "apt-get", "install", "python3.10", "python3.10-venv", "python3.10-dev", "-y"], check=True)
+
+# 2. Create the virtual environment
+subprocess.run(["python3.10", "-m", "venv", "/content/venv"], check=True)
+
+# 3. Upgrade pip inside the venv
+subprocess.run(["/content/venv/bin/python", "-m", "pip", "install", "--upgrade", "pip"], check=True)
+
+# 4. Install the serving pins + autoawq for Day 4
+subprocess.run([
+    "/content/venv/bin/python", "-m", "pip", "install", "-q",
+    "vllm==0.6.*",
+    "transformers==4.46.*",
+    "accelerate==1.1.*",
+    "autoawq==0.2.*",
+    "httpx==0.27.*",
+    "openai==1.54.*"
+], check=True)
+
+print("Python 3.10 venv ready with AWQ serving pins installed!")
 
 Start:      wk2-fastapi checkpoint plus yesterday's baselines.json (the file you
             downloaded on day 2). A fresh Colab T4 runtime. The shared scaffold
