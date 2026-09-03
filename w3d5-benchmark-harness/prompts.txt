@@ -1,0 +1,20 @@
+What is a GPU?
+Define tokens per second in one line.
+Explain the difference between prefill and decode in two sentences.
+List three reasons decode is memory-bound rather than compute-bound.
+Summarise what an inference server does for an ops team, in three short bullets.
+Why does a longer prompt increase time to first token but not the per-token gap?
+Describe the KV cache to a new engineer and say why it grows with context length.
+Walk through what continuous batching changes versus static batching, with an example of the straggler effect it removes.
+Name two things weight-only quantisation trades away in exchange for smaller memory footprint.
+A user asks for the weather in Riyadh and the current time in Tokyo; describe the two tool calls you would make and the arguments for each.
+Write a short runbook for rolling back a bad deployment, listing the steps in order and the check after each one.
+Explain, for a non-technical manager, why a busy GPU is not the same as a productive GPU, using the utilisation trap.
+Compare fp16 and int4 for serving a 1.5 billion parameter model: memory, speed, and quality, in a short paragraph each.
+Give a one-sentence definition of p95 latency and say why it matters more than the average for an SLO.
+Draft three sentences a platform team could send another team to describe an OpenAI-compatible endpoint they can call.
+Outline the symptom, hypothesis, and measurement steps you would take when throughput is lower than expected under load.
+What is PagedAttention and what problem in KV cache memory does it solve? Answer in two sentences.
+Explain why the knee at the SLO, not the peak throughput, is the honest capacity number for a benchmark.
+Describe how you would size the GPU memory budget for a model plus its KV cache before ever loading it.
+Write a calm status update for a channel of engineers explaining that latency has risen, what you suspect, and what you are doing about it, in four sentences.
