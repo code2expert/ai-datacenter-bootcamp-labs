@@ -10,7 +10,7 @@ spec:
   containers:
     - name: serving
       # EDIT THIS LINE: your own wk2 image from Docker Hub
-      image: <your-user>/aidc-serving:cpu-v1
+      image: rawanbu/aidc-serving:cpu-v1
       ports:
         - containerPort: 8000
       env:

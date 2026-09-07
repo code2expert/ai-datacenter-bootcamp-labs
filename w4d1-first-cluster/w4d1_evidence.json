@@ -1,0 +1,1 @@
+{"cluster": "pod:aidc-t12", "namespace": "rawan", "pod": "serving", "image": "rawanbu/aidc-serving:cpu-v1", "node": "aidc-t12", "chat_status": 200}
