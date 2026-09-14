@@ -1,0 +1,58 @@
+# The pod from yesterday, wrapped in the thing that keeps it alive.
+# Fill the two TODO blocks during Step 2; everything else is given.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: serving
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: serving
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0     # never take a ready pod away before its replacement is ready
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: serving
+    spec:
+      containers:
+        - name: serving
+          # EDIT: your own wk2 image
+          image: duaa2/aidc-serving:cpu-v1
+          ports:
+            - containerPort: 8000
+          lifecycle:
+            preStop:              # keep serving while endpoint removal propagates;
+              sleep:              # without this, a rolling update drops the requests
+                seconds: 5        # that land in that race window (measured: 2 in 45s)
+          env:
+            - name: MODEL_BACKEND
+              value: "echo"
+            - name: MODEL_ID
+              value: "Qwen/Qwen2.5-0.5B-Instruct"
+            - name: APP_VERSION        # an env var; changing it is one way to trigger a roll (the verifier flips VERIFY_STAMP)
+              value: "v1"
+          # TODO (Step 2): readiness probe on GET /health, port 8000.
+          # The app answers 503 there until the backend is loaded, so this is
+          # the gate that keeps traffic away from a pod that cannot serve yet.
+          #
+          # TODO (Step 2): liveness probe on GET /health, port 8000, with a
+          # generous initialDelaySeconds. This is the one that restarts a pod
+          # that was healthy and stopped being.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 2
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 5

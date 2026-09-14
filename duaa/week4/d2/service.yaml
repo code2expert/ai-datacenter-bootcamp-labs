@@ -1,0 +1,11 @@
+# One stable name in front of however many serving pods exist right now.
+apiVersion: v1
+kind: Service
+metadata:
+  name: serving
+spec:
+  selector:
+    app: serving          # matches the pod template's label, not the Deployment's name
+  ports:
+    - port: 8000
+      targetPort: 8000

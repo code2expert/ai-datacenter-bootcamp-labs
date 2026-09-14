@@ -1,0 +1,127 @@
+{
+  "id": 1,
+  "uid": "bfy7vmgum56v4d",
+  "orgID": 1,
+  "folderUID": "cfy7senb1rkzka",
+  "ruleGroup": "Team 2 evaluation group",
+  "title": "Team service alert",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "prom",
+      "model": {
+        "editorMode": "code",
+        "expr": "60 * (sum(rate(vllm:request_success_total{job=\"serving\",finished_reason=~\"stop|length\"}[5m])) or sum(rate(vllm_request_success_total{job=\"serving\",finished_reason=~\"stop|length\"}[5m])))",
+        "instant": true,
+        "intervalMs": 1000,
+        "legendFormat": "__auto",
+        "maxDataPoints": 43200,
+        "range": false,
+        "refId": "A"
+      }
+    },
+    {
+      "refId": "B",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "B"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "__expr__"
+        },
+        "expression": "A",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce"
+      }
+    },
+    {
+      "refId": "C",
+      "queryType": "",
+      "relativeTimeRange": {
+        "from": 0,
+        "to": 0
+      },
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                20
+              ],
+              "type": "lt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "C"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "last"
+            },
+            "type": "query"
+          }
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "__expr__"
+        },
+        "expression": "B",
+        "intervalMs": 1000,
+        "maxDataPoints": 43200,
+        "refId": "C",
+        "type": "threshold"
+      }
+    }
+  ],
+  "updated": "2026-09-14T10:46:01Z",
+  "noDataState": "NoData",
+  "execErrState": "Error",
+  "for": "1m",
+  "annotations": {
+    "summary": "Service: Team vLLM Chat API (namespace=\"team\")\nIssue: Request completion rate dropped or performance degradation detected.\nFirst Action: Check the Grafana dashboard for recent error spikes, inspect pod logs using kubectl logs -n team -l app=vllm, and verify that the traffic generator client is running correctly."
+  },
+  "isPaused": false,
+  "notification_settings": {
+    "receiver": "Lab inbox"
+  },
+  "record": null
+}

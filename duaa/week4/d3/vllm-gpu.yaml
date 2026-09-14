@@ -1,0 +1,96 @@
+# THE TEAM'S ENGINE: vLLM onto the team GPU pod (k3s + NVIDIA device plugin),
+# applied once per team in the `team` namespace (D3 Step 6) and left running:
+# Thursday's go-live exposes THIS, not the echo chart.
+# The flags below are PINS.md canon for the wk-3 locked model, the same launch
+# your team verified on the T4, now inside the cluster. Set --model to YOUR
+# model-lock.md id (the AWQ build, or the pocket known-good without the awq
+# flag). The pod's cache already holds Qwen/Qwen2.5-1.5B-Instruct-AWQ, so that
+# id is Ready in about two minutes; anything else downloads first. The Secret
+# must exist first, in the same namespace:
+#   kubectl create secret generic serving-keys --from-literal=api-key=<key>
+#
+# The node must have been provisioned per instructor/tier1-pod-runbook.md. That
+# runbook installs k3s with `--default-runtime nvidia`, which is what lets this
+# manifest run unchanged from the tier-0 version. Without it the pod schedules,
+# the scheduler debits the GPU from the node ledger, and the container still
+# gets no /dev/nvidia* devices; vLLM then dies with
+# `RuntimeError: Failed to infer device type`, which names nothing useful.
+---
+# The Service must NOT be called `vllm`. Kubernetes injects a Docker-link env
+# var per Service into every pod in the namespace, so a Service named `vllm`
+# sets VLLM_PORT=tcp://10.43.x.x:8000, and vLLM reads VLLM_PORT as its own
+# integer config. The engine dies on
+# `ValueError: invalid literal for int() with base 10: 'tcp://...'`.
+# `team-serving` is also the target week 4's go-live Prometheus already scrapes,
+# so that config works at tier 1 unchanged.
+#
+# ClusterIP today: reachable inside the cluster only. Thursday's go-live (D5
+# Step 3) makes it the team's public endpoint with one patch, which puts it on
+# NodePort 30800, the port the pod's tunnel and front door are built to reach:
+#   kubectl patch svc team-serving -p '{"spec":{"type":"NodePort","ports":[{"name":"http","port":8000,"targetPort":8000,"nodePort":30800}]}}'
+apiVersion: v1
+kind: Service
+metadata:
+  name: team-serving
+spec:
+  selector: {app: vllm}
+  ports:
+    - {name: http, port: 8000, targetPort: 8000}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: vllm}}
+  template:
+    metadata: {labels: {app: vllm}}
+    spec:
+      containers:
+        - name: vllm
+          # Tier 1 runs a NEWER engine than the Colab notebooks, on purpose.
+          # The 0.6.6.post1 pin exists for the T4, which is Turing; this pod is
+          # Ampere and 0.6.6 cannot load anything released in the last year
+          # (measured: `KeyError: 'qwen3_5'`). See PINS.md, "The two engines".
+          image: vllm/vllm-openai:v0.27.1
+          args:
+            - --model=Qwen/Qwen2.5-1.5B-Instruct-AWQ   # EDIT: your model-lock.md id
+            - --quantization=awq                       # drop if you locked the pocket fp16
+            - --dtype=half
+            - --max-model-len=4096
+            - --gpu-memory-utilization=0.85
+            - --enable-auto-tool-choice
+            - --tool-call-parser=hermes                # per family; see model-lock.md
+          ports:
+            - containerPort: 8000
+          env:
+            - name: VLLM_API_KEY
+              valueFrom:
+                secretKeyRef: {name: serving-keys, key: api-key}
+          # Monday's ledger entry, applied to the engine. requests == limits on
+          # both cpu and memory is what buys QoS class Guaranteed; a GPU alone
+          # buys nothing, because QoS is computed from cpu and memory only.
+          # 8.7 GiB was the measured peak for a 1.5B AWQ model, most of it the
+          # CUDA context rather than weights. Raise memory for a larger lock.
+          resources:
+            requests:
+              cpu: "4"
+              memory: 16Gi
+              nvidia.com/gpu: 1
+            limits:
+              cpu: "4"
+              memory: 16Gi
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - {name: hf-cache, mountPath: /root/.cache/huggingface}
+          startupProbe:               # engines load slowly; do not let liveness
+            httpGet: {path: /health, port: 8000}   # kill a model mid-download
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 5
+      volumes:
+        - name: hf-cache
+          hostPath: {path: /var/lib/hf-cache, type: DirectoryOrCreate}

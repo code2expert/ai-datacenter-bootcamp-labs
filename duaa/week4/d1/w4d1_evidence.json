@@ -1,0 +1,1 @@
+{"cluster": "pod:aidc-t08", "namespace": "duaa", "pod": "serving", "image": "duaa2/aidc-serving:cpu-v1", "node": "aidc-t08", "chat_status": 200}

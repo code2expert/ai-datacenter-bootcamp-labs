@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-serving
+  labels:
+    app.kubernetes.io/name: serving
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  {{- if not .Values.hpa.enabled }}
+  replicas: {{ .Values.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: serving
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: serving
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: serving
+          image: {{ .Values.image }}
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MODEL_BACKEND
+              value: {{ .Values.backend | quote }}
+            - name: MODEL_ID
+              value: {{ .Values.modelId | quote }}
+            {{- if .Values.apiKeySecret }}
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.apiKeySecret }}
+                  key: api-key
+            {{- else if .Values.apiKey }}
+            # teaching-only path: a --set key lands in shell history and
+            # `helm get values`; go-live (D5) uses apiKeySecret instead
+            - name: API_KEY
+              value: {{ .Values.apiKey | quote }}
+            {{- end }}
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            periodSeconds: 2
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 120
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

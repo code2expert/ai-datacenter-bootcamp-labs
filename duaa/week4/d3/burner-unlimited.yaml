@@ -1,0 +1,18 @@
+# The noisy neighbour: burns as much CPU as the node will give it.
+# EDIT THE IMAGE LINE. Unlike impossible-cpu.yaml and wants-a-gpu.yaml, which
+# never leave Pending, this one has to actually run to burn anything; left as
+# the placeholder it goes InvalidImageName and the experiment reads as a null.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: burner-unlimited
+spec:
+  replicas: 20
+  selector: {matchLabels: {app: burner-unlimited}}
+  template:
+    metadata: {labels: {app: burner-unlimited}}
+    spec:
+      containers:
+        - name: burner
+          image: duaa2/aidc-serving:cpu-v1
+          command: ["python", "-c", "while True: pass"]

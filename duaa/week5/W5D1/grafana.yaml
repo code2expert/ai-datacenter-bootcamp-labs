@@ -1,0 +1,66 @@
+# Grafana with a Prometheus data source in the same namespace.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource
+data:
+  prom.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        uid: prom
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-provider
+data:
+  provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: aidc
+        type: file
+        options: {path: /var/lib/grafana/dashboards}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: grafana}}
+  template:
+    metadata: {labels: {app: grafana}}
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.4.0
+          ports: [{containerPort: 3000}]
+          env:
+            # Anonymous access is read-only. Admin uses serving-keys/api-key.
+            - {name: GF_AUTH_ANONYMOUS_ENABLED, value: "true"}
+            - {name: GF_AUTH_ANONYMOUS_ORG_ROLE, value: "Viewer"}
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom: {secretKeyRef: {name: serving-keys, key: api-key}}
+          volumeMounts:
+            - {name: datasource, mountPath: /etc/grafana/provisioning/datasources}
+            - {name: provider, mountPath: /etc/grafana/provisioning/dashboards}
+            - {name: dashboards, mountPath: /var/lib/grafana/dashboards}
+      volumes:
+        - {name: datasource, configMap: {name: grafana-datasource}}
+        - {name: provider, configMap: {name: grafana-provider}}
+        - {name: dashboards, configMap: {name: slo-dashboard, optional: true}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+spec:
+  selector: {app: grafana}
+  # The team's Grafana hostname routes to NodePort 30300.
+  type: NodePort
+  ports: [{port: 3000, targetPort: 3000, nodePort: 30300}]

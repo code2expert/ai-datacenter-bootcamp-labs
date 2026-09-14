@@ -1,0 +1,164 @@
+{
+  "uid": "service-example",
+  "title": "Baseline chat: example",
+  "tags": [
+    "aidc",
+    "example"
+  ],
+  "timezone": "browser",
+  "refresh": "15s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Scrape success (1h)",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * avg_over_time(up{job=\"serving\"}[1h])"
+        }
+      ],
+      "description": "What fraction of recorded scrapes succeeded in the last hour? This checks the metrics endpoint only. Missing history while Prometheus is stopped is not counted as failure."
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "TTFT p95 (5m)",
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:time_to_first_token_seconds_bucket{job=\"serving\"}[5m]))) or histogram_quantile(0.95, sum by (le) (rate(vllm_time_to_first_token_seconds_bucket{job=\"serving\"}[5m])))"
+        }
+      ],
+      "description": "How long did the baseline chat engine take to produce a first token for 95% of requests over five minutes? Histogram estimate in seconds; idle windows can be NaN."
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Completed requests / min (5m)",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqpm",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "60 * (sum(rate(vllm:request_success_total{job=\"serving\",finished_reason=~\"stop|length\"}[5m])) or sum(rate(vllm_request_success_total{job=\"serving\",finished_reason=~\"stop|length\"}[5m])))"
+        }
+      ],
+      "description": "How many requests per minute finished with stop or length in this five-minute window? Abort and error outcomes are excluded. Completion does not establish output quality."
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "TTFT p95 over time",
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(vllm:time_to_first_token_seconds_bucket{job=\"serving\"}[5m]))) or histogram_quantile(0.95, sum by (le) (rate(vllm_time_to_first_token_seconds_bucket{job=\"serving\"}[5m])))"
+        }
+      ],
+      "description": "How long did the baseline chat engine take to produce a first token for 95% of requests over five minutes? Histogram estimate in seconds; idle windows can be NaN."
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Completed requests over time",
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 9
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqpm",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "60 * (sum(rate(vllm:request_success_total{job=\"serving\",finished_reason=~\"stop|length\"}[5m])) or sum(rate(vllm_request_success_total{job=\"serving\",finished_reason=~\"stop|length\"}[5m])))"
+        }
+      ],
+      "description": "How many requests per minute finished with stop or length in this five-minute window? Abort and error outcomes are excluded. Completion does not establish output quality."
+    }
+  ],
+  "description": "Example for the baseline chat engine, with no declared targets. Choose and adapt two or three indicators for the service you measure, then save as Team service. Both vllm: and vllm_ spellings are included as fallbacks; verify the actual names and job label in your TSDB. Scrape success measures recorded scrapes, not request availability. HTTP request outcomes need the separate http_requests_total family, if your server exposes it. These queries combine models within job=serving; filter model_name when measuring one of several models."
+}

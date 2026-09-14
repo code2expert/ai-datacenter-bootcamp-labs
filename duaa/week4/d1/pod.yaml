@@ -1,0 +1,20 @@
+# The wk2 container, as a single pod. This file is given complete on day 1;
+# from tomorrow you write the YAML yourself.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: serving
+  labels:
+    app: serving
+spec:
+  containers:
+    - name: serving
+      # EDIT THIS LINE: your own wk2 image from Docker Hub
+      image: duaa2/aidc-serving:cpu-v1
+      ports:
+        - containerPort: 8000
+      env:
+        - name: MODEL_BACKEND
+          value: "echo"          # orchestration week: the objective is the cluster, not the model
+        - name: MODEL_ID
+          value: "Qwen/Qwen2.5-0.5B-Instruct"

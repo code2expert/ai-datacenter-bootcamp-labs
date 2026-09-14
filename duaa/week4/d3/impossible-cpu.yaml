@@ -1,0 +1,14 @@
+# A perfectly valid wish the scheduler cannot grant. It will sit Pending;
+# the lesson is in `kubectl describe pod impossible-cpu`, Events.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: impossible-cpu
+spec:
+  containers:
+    - name: wisher
+      image: <your-user>/aidc-serving:cpu-v1
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: "64"

@@ -1,0 +1,30 @@
+# Everything a deploy might change, in one file. The templates read these;
+# `helm install -f` or `--set` overrides them per release.
+image: <your-user>/aidc-serving:cpu-v1
+
+replicas: 1
+
+backend: echo                      # echo for tier 0; transformers/vllm at tier 1
+modelId: Qwen/Qwen2.5-0.5B-Instruct
+
+apiKey: ""                         # teaching-only: a --set literal leaks into shell history and helm get values
+apiKeySecret: ""                   # go-live (Thursday): name of a Secret carrying key `api-key`; wins over apiKey. Empty + empty = open, with the app's loud startup warning
+
+service:
+  type: ClusterIP                  # go-live on the team pod: --set service.type=NodePort
+  nodePort: 30800                  # fixed on purpose: the pod's tunnel reaches this port
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 4Gi
+
+hpa:
+  enabled: false                   # Wednesday's lab turns this on
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUPercent: 50
+  scaleDownStabilizationSeconds: 60   # default is 300; shortened so the lab can watch scale-in

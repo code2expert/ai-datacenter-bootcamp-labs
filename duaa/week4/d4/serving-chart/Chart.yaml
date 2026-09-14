@@ -1,0 +1,6 @@
+apiVersion: v2
+name: serving
+description: The course serving stack, packaged. Same objects you wrote by hand on Monday; Helm's only new idea is that values.yaml fills the blanks.
+type: application
+version: 0.1.0
+appVersion: "wk4"

@@ -1,0 +1,19 @@
+# The same neighbour, on a leash.
+# EDIT THE IMAGE LINE here too; this one runs as well.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: burner-limited
+spec:
+  replicas: 20
+  selector: {matchLabels: {app: burner-limited}}
+  template:
+    metadata: {labels: {app: burner-limited}}
+    spec:
+      containers:
+        - name: burner
+          image: duaa2/aidc-serving:cpu-v1
+          command: ["python", "-c", "while True: pass"]
+          resources:
+            limits:
+              cpu: 500m

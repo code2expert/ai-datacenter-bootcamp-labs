@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-serving
+spec:
+  # ClusterIP on kind, where nothing outside the cluster needs to reach this and
+  # port-forward is the operator's private door. NodePort on the team GPU pod at
+  # go-live, which is the same Service plus a fixed port on the node's own
+  # address - Monday's slide, now load-bearing. The tunnel on the pod is
+  # configured to reach exactly that port, so the number is not arbitrary.
+  type: {{ .Values.service.type }}
+  selector:
+    app.kubernetes.io/name: serving
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - port: 8000
+      targetPort: 8000
+      {{- if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
